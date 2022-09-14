@@ -19,22 +19,24 @@ class AuthProvider extends ChangeNotifier {
   final GoogleSignIn googleSignIn;
   final FirebaseAuth firebaseAuth;
   final FirebaseFirestore firebaseFirestore;
-  final SharedPreferences pref;
+
   Status _status = Status.uninitialised;
 
   Status get status => _status;
 
-  AuthProvider(
-      {required this.firebaseAuth,
-      required this.firebaseFirestore,
-      required this.googleSignIn,
-      required this.pref});
+  AuthProvider({
+    required this.firebaseAuth,
+    required this.firebaseFirestore,
+    required this.googleSignIn,
+  });
 
-  String? getUserFirebaseId() {
+  Future<String?> getUserFirebaseId() async {
+    final pref = await SharedPreferences.getInstance();
     return pref.getString(FirestoreConstants.id);
   }
 
   Future<bool> isLoggedIn() async {
+    final pref = await SharedPreferences.getInstance();
     bool isLoggedIn = await googleSignIn.isSignedIn();
     if (isLoggedIn &&
         pref.getString(FirestoreConstants.id)?.isNotEmpty == true) {
@@ -45,6 +47,7 @@ class AuthProvider extends ChangeNotifier {
   }
 
   Future<bool> handleSignIn() async {
+    final pref = await SharedPreferences.getInstance();
     _status = Status.authenticating;
     notifyListeners();
 
@@ -89,12 +92,10 @@ class AuthProvider extends ChangeNotifier {
           DocumentSnapshot documentSnapshot = document[0];
           UserChat userChat = UserChat.fromDocument(documentSnapshot);
           await pref.setString(FirestoreConstants.id, userChat.id);
+          await pref.setString(FirestoreConstants.nickname, userChat.nickname);
+          await pref.setString(FirestoreConstants.photoUrl, userChat.photoUrl);
           await pref.setString(
-              FirestoreConstants.nickname, userChat.nickname ?? '');
-          await pref.setString(
-              FirestoreConstants.photoUrl, userChat.photoUrl ?? '');
-          await pref.setString(
-              FirestoreConstants.phoneNumber, userChat.phoneNumber ?? '');
+              FirestoreConstants.phoneNumber, userChat.phoneNumber);
         }
         _status = Status.authenticated;
         notifyListeners();
@@ -110,11 +111,11 @@ class AuthProvider extends ChangeNotifier {
       return false;
     }
   }
-  Future<void> signOut()async{
-    _status= Status.uninitialised;
+
+  Future<void> signOut() async {
+    _status = Status.uninitialised;
     await firebaseAuth.signOut();
     await googleSignIn.disconnect();
     await googleSignIn.signOut();
-
   }
 }

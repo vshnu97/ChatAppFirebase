@@ -51,6 +51,11 @@ class UserChat {
     } catch (e) {
       log(e.toString());
     }
-    return UserChat(id: doc.id, aboutMe: aboutMe, nickname: nickname, phoneNumber: phoneNumber, photoUrl: photoUrl);
+    return UserChat(
+        id: doc.id,
+        aboutMe: aboutMe,
+        nickname: nickname,
+        phoneNumber: phoneNumber,
+        photoUrl: photoURL);
   }
 }
